@@ -37,14 +37,24 @@ def get_weather(demo=False):
     if demo:
         return {"temp": 7, "feels": 4, "code": 61, "wind": 14, "hi": 9, "lo": 3, "pop": 70,
                 "days": [("Sun", 8, 3, 61, 70), ("Mon", 10, 5, 3, 20), ("Tue", 9, 4, 2, 10)]}
-    import requests
-    r = requests.get("https://api.open-meteo.com/v1/forecast", params={
+    import requests, time
+    params = {
         "latitude": LAT, "longitude": LON, "timezone": "Europe/London", "wind_speed_unit": "mph",
         "current": "temperature_2m,apparent_temperature,weather_code,wind_speed_10m",
         "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-        "forecast_days": 4}, timeout=30)
-    r.raise_for_status()
-    j = r.json()
+        "forecast_days": 4}
+    j = None
+    for attempt in range(4):                       # Open-Meteo is sometimes slow: retry
+        try:
+            r = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=20)
+            r.raise_for_status()
+            j = r.json()
+            break
+        except Exception as e:
+            print(f"weather attempt {attempt + 1} failed: {e}")
+            time.sleep(5 * (attempt + 1))
+    if j is None:
+        return None                                # give up: still draw the date
     c, d = j["current"], j["daily"]
     days = [(dt.date.fromisoformat(d["time"][i]).strftime("%a"), round(d["temperature_2m_max"][i]),
              round(d["temperature_2m_min"][i]), d["weather_code"][i],
@@ -64,6 +74,10 @@ def render(now, w):
     d.text((W // 2, 430), now.strftime("%A"), font=font(100), fill=0, anchor="ma")
     d.text((W - pad, H - 50), f"updated {now.strftime('%H:%M')}", font=font(30), fill=110, anchor="rb")
     d.line((pad, 590, W - pad, 590), fill=0, width=5)
+    if w is None:
+        d.text((W // 2, 760), "Weather unavailable", font=font(60, True), fill=0, anchor="ma")
+        d.text((W // 2, 850), "will retry at the next update", font=font(38), fill=90, anchor="ma")
+        return img
     # weather now
     d.text((pad, 620), f"{w['temp']}°", font=font(190, True), fill=0)
     d.text((pad + 400, 640), WMO.get(w["code"], "—"), font=font(60, True), fill=0)
