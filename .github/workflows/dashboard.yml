@@ -1,0 +1,34 @@
+name: Update Kindle dashboard
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"     # every 20 min (GitHub may delay runs a few minutes)
+  workflow_dispatch: {}          # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Render dashboard
+        env:
+          OUT_FILE: out/dashboard.png
+        run: |
+          mkdir -p out
+          python dashboard.py
+      - name: Publish image to the "image" branch (single commit, no history growth)
+        run: |
+          cd out
+          git init -q
+          git config user.name "dashboard-bot"
+          git config user.email "dashboard-bot@users.noreply.github.com"
+          git add dashboard.png
+          git commit -q -m "update $(date -u +%FT%TZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/image
