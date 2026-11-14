@@ -62,6 +62,7 @@ def render(now, w):
     # date only (no clock: e-ink refreshes too rarely for the time to be right)
     d.text((W // 2, 60), now.strftime("%d/%m"), font=font(300, True), fill=0, anchor="ma")
     d.text((W // 2, 430), now.strftime("%A"), font=font(100), fill=0, anchor="ma")
+    d.text((W - pad, H - 50), f"updated {now.strftime('%H:%M')}", font=font(30), fill=110, anchor="rb")
     d.line((pad, 590, W - pad, 590), fill=0, width=5)
     # weather now
     d.text((pad, 620), f"{w['temp']}°", font=font(190, True), fill=0)
