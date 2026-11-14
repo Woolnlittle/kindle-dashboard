@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple Kindle Paperwhite dashboard: time, date (DD/MM) and weather for Northwich.
+"""Simple Kindle Paperwhite dashboard: date (DD/MM) and weather for Northwich.
 
 Writes a 1072x1448 8-bit grayscale PNG. Weather is from Open-Meteo (free, no key).
   python dashboard.py          # live weather
@@ -59,11 +59,9 @@ def render(now, w):
     img = Image.new("L", (W, H), 255)
     d = ImageDraw.Draw(img)
     pad = 60
-    # time + date
-    d.text((pad, 50), now.strftime("%H:%M"), font=font(260, True), fill=0)
-    d.text((pad, 360), now.strftime("%d/%m"), font=font(150, True), fill=0)
-    d.text((pad + 470, 400), now.strftime("%A"), font=font(70), fill=0)
-    d.text((W - pad, 40), f"updated {now.strftime('%H:%M')}", font=font(26), fill=110, anchor="ra")
+    # date only (no clock: e-ink refreshes too rarely for the time to be right)
+    d.text((W // 2, 60), now.strftime("%d/%m"), font=font(300, True), fill=0, anchor="ma")
+    d.text((W // 2, 430), now.strftime("%A"), font=font(100), fill=0, anchor="ma")
     d.line((pad, 590, W - pad, 590), fill=0, width=5)
     # weather now
     d.text((pad, 620), f"{w['temp']}°", font=font(190, True), fill=0)
